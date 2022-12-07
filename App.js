@@ -10,6 +10,7 @@ import {
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-community/async-storage";
 
 //ClientIds sacadas de google cloud
 //web: 1016554042795-fair6q1jnob9plj6s2589pqd87r8midd.apps.googleusercontent.com
@@ -31,10 +32,13 @@ export default function App() {
   });
 
   useEffect(() => {
+    getData();
     if (response?.type === "success") {
       setAccessToken(response.authentication.accessToken);
       accessToken && fetchUserInfo();
+      storeData(accessToken);
     }
+    console.log(user);
   }, [response, accessToken]);
 
   const fetchUserInfo = async () => {
@@ -45,6 +49,31 @@ export default function App() {
     });
     const userInfo = await response.json();
     SetUser(userInfo);
+    console.log("userInfo", userInfo);
+  };
+
+  const logOut = async () => {
+    SetUser(null);
+  };
+
+  const storeData = async (value) => {
+    try {
+      await AsyncStorage.setItem("token", value);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
+  const getData = async () => {
+    try {
+      const value = await AsyncStorage.getItem("token");
+      if (value !== null) {
+        console.log("value", value);
+        SetUser(!null);
+      }
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const UserComp = () => {
@@ -52,7 +81,6 @@ export default function App() {
       return (
         <View
           style={{
-            backgroundColor: "pink",
             height: 30,
             justifyContent: "center",
             alignItems: "center",
@@ -70,27 +98,26 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={{ fontSize: 40 }}>Welcome!</Text>
+      <Text style={{ fontSize: 40, marginBottom: 40 }}>Welcome!</Text>
       {user && <UserComp />}
-      {user === null && (
-        <TouchableOpacity
-          disabled={!request}
-          onPress={() => promptAsync()}
-          style={{
-            backgroundColor: "pink",
-            height: 40,
-            width: "80%",
-            borderRadius: 50,
-            justifyContent: "center",
-            alignItems: "center",
-            marginVertical: 20,
-          }}
-        >
-          <Text style={{ justifyContent: "center", alignItems: "center" }}>
-            Login
-          </Text>
-        </TouchableOpacity>
-      )}
+
+      <TouchableOpacity
+        disabled={!request}
+        onPress={() => (user === null ? promptAsync() : logOut())}
+        style={{
+          backgroundColor: "pink",
+          height: 40,
+          width: "80%",
+          borderRadius: 50,
+          justifyContent: "center",
+          alignItems: "center",
+          marginVertical: user === null ? 20 : 60,
+        }}
+      >
+        <Text style={{ justifyContent: "center", alignItems: "center" }}>
+          {user === null ? "Login" : "Logout"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
