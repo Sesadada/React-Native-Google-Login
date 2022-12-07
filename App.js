@@ -1,5 +1,12 @@
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Text, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  Button,
+} from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import { useEffect, useState } from "react";
@@ -26,22 +33,64 @@ export default function App() {
   useEffect(() => {
     if (response?.type === "success") {
       setAccessToken(response.authentication.accessToken);
+      accessToken && fetchUserInfo();
     }
-  }, []);
+  }, [response, accessToken]);
 
-  const fectUserInfo = async () => {
+  const fetchUserInfo = async () => {
     let response = await fetch("https://www.googleapis.com/userinfo/v2/me", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
     const userInfo = await response.json();
+    SetUser(userInfo);
+  };
+
+  const UserComp = () => {
+    if (user) {
+      return (
+        <View
+          style={{
+            backgroundColor: "pink",
+            height: 30,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <Image
+            source={{ uri: user.picture }}
+            style={{ width: 100, height: 100, borderRadius: 50 }}
+          ></Image>
+          <Text>{user.name}</Text>
+        </View>
+      );
+    }
   };
 
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      <Text style={{ fontSize: 40 }}>Welcome!</Text>
+      {user && <UserComp />}
+      {user === null && (
+        <TouchableOpacity
+          disabled={!request}
+          onPress={() => promptAsync()}
+          style={{
+            backgroundColor: "pink",
+            height: 40,
+            width: "80%",
+            borderRadius: 50,
+            justifyContent: "center",
+            alignItems: "center",
+            marginVertical: 20,
+          }}
+        >
+          <Text style={{ justifyContent: "center", alignItems: "center" }}>
+            Login
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
